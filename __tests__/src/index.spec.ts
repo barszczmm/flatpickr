@@ -91,6 +91,10 @@ function simulate(
   onElement.dispatchEvent(evt);
 }
 
+// n-th day of the first shown month (days are grouped into week rows)
+const dayAt = (i: number) =>
+  fp.days.querySelectorAll(".flatpickr-day")[i] as DayElement;
+
 // simulate click
 const clickOn = (element: Node) => {
   simulate("click", element, { which: 1 }, CustomEvent);
@@ -704,12 +708,7 @@ describe("flatpickr", () => {
         });
 
         simulate("focus", fp._input);
-        simulate(
-          "click",
-          fp.days.childNodes[15],
-          { which: 1, bubbles: true },
-          CustomEvent
-        );
+        simulate("click", dayAt(15), { which: 1, bubbles: true }, CustomEvent);
         expect(fp.selectedDates.length).toBe(1);
 
         fp.isOpen = true;
@@ -796,11 +795,11 @@ describe("flatpickr", () => {
       fp.jumpToDate("2016-2-1");
 
       fp.open();
-      (fp.days.childNodes[15] as HTMLSpanElement).focus();
+      (dayAt(15) as HTMLSpanElement).focus();
 
       simulate(
         "keydown",
-        fp.days.childNodes[15],
+        dayAt(15),
         {
           keyCode: 13, // "Enter"
         },
@@ -861,7 +860,7 @@ describe("flatpickr", () => {
       fp.jumpToDate("2016-2-1");
 
       fp.open();
-      (fp.days.childNodes[15] as HTMLSpanElement).focus();
+      (dayAt(15) as HTMLSpanElement).focus();
 
       simulate(
         "keydown",
@@ -951,10 +950,10 @@ describe("flatpickr", () => {
       fp.jumpToDate("2017-1-1");
       fp.open();
 
-      simulate("keydown", fp.days.childNodes[0], { keyCode: 13 }); // "Enter"
+      simulate("keydown", dayAt(0), { keyCode: 13 }); // "Enter"
       expect(fp.selectedDates.length).toBe(1);
 
-      simulate("keydown", fp.days.childNodes[0], { keyCode: 13 }); // "Enter"
+      simulate("keydown", dayAt(0), { keyCode: 13 }); // "Enter"
       expect(fp.selectedDates.length).toBe(0);
     });
 
@@ -963,7 +962,7 @@ describe("flatpickr", () => {
       fp.jumpToDate("2017-1-1");
       expect(fp.currentMonth).toBe(0);
 
-      simulate("click", fp.days.childNodes[41], { which: 1 }, MouseEvent);
+      simulate("click", dayAt(41), { which: 1 }, MouseEvent);
       expect(fp.selectedDates.length).toBe(1);
       expect(fp.currentMonth).toBe(1);
     });
@@ -995,7 +994,7 @@ describe("flatpickr", () => {
       simulate("click", fp.prevMonthNav, { which: 1 }, CustomEvent);
       expect(fp.currentMonth).toEqual(0);
 
-      simulate("click", fp.days.children[2], { which: 1 }, CustomEvent);
+      simulate("click", dayAt(2), { which: 1 }, CustomEvent);
       expect(fp.currentMonth).toEqual(0);
     });
 
@@ -1090,9 +1089,7 @@ describe("flatpickr", () => {
         const expectedWeekNumbers = Array(6)
           .fill(null)
           .map((_, i) =>
-            fp.config.getWeek(
-              (fp.days.children[7 * i + 6] as DayElement).dateObj
-            )
+            fp.config.getWeek((dayAt(7 * i + 6) as DayElement).dateObj)
           );
 
         const actualWeekNumbers = Array.from(
@@ -1219,7 +1216,7 @@ describe("flatpickr", () => {
       });
 
       fp.open();
-      simulate("click", fp.days.childNodes[15], { which: 1 }, MouseEvent); // oct 10
+      simulate("click", dayAt(15), { which: 1 }, MouseEvent); // oct 10
 
       verifySelected(fp.selectedDates[0]);
     });
@@ -1234,9 +1231,7 @@ describe("flatpickr", () => {
 
       expect(fp.currentYear).toEqual(2001);
       expect(fp.currentYearElement.value).toEqual("2001");
-      expect(
-        (fp.days.childNodes[10] as DayElement).dateObj.getFullYear()
-      ).toEqual(2001);
+      expect((dayAt(10) as DayElement).dateObj.getFullYear()).toEqual(2001);
     });
 
     it("time input and increments", () => {
@@ -1665,15 +1660,15 @@ describe("flatpickr", () => {
         mode: "range",
       });
 
-      const day = (i: number) => fp.days.childNodes[i] as DayElement;
+      const day = (i: number) => dayAt(i) as DayElement;
 
-      simulate("mouseover", fp.days.childNodes[15]);
+      simulate("mouseover", dayAt(15));
       expect(fp.selectedDates.length).toEqual(0);
 
       fp.setDate("2016-1-17");
       expect(fp.selectedDates.length).toEqual(1);
 
-      simulate("mouseover", fp.days.childNodes[32]);
+      simulate("mouseover", dayAt(32));
       expect(day(21).classList.contains("startRange")).toEqual(true);
 
       for (let i = 0; i < 42; i++)
@@ -1698,7 +1693,7 @@ describe("flatpickr", () => {
         expect(day(i).classList.contains("flatpickr-disabled")).toEqual(false);
       }
 
-      simulate("click", fp.days.childNodes[17], { which: 1 }, MouseEvent);
+      simulate("click", dayAt(17), { which: 1 }, MouseEvent);
       expect(fp.selectedDates.length).toEqual(2);
       expect(fp.input.value).toEqual("2016-01-13 to 2016-01-17");
     });
@@ -1939,7 +1934,6 @@ describe("flatpickr", () => {
     it("renders interactive elements as buttons", () => {
       create({ enableTime: true });
 
-      expect(fp.days.querySelector(".flatpickr-day")!.tagName).toBe("BUTTON");
       expect(fp.prevMonthNav.tagName).toBe("BUTTON");
       expect(fp.nextMonthNav.tagName).toBe("BUTTON");
       expect(fp.amPM!.tagName).toBe("BUTTON");
@@ -1978,13 +1972,91 @@ describe("flatpickr", () => {
       });
 
       const selected = fp.selectedDateElem!;
-      expect(selected.getAttribute("aria-pressed")).toBe("true");
+      expect(selected.getAttribute("aria-selected")).toBe("true");
+      expect(dayAt(10).getAttribute("aria-selected")).toBe("false");
 
       const disabled = Array.prototype.filter.call(
-        fp.days.childNodes,
+        fp.days.querySelectorAll(".flatpickr-day"),
         (d: DayElement) => d.getAttribute("aria-label") === "May 20, 2024"
       )[0] as DayElement;
       expect(disabled.getAttribute("aria-disabled")).toBe("true");
+    });
+
+    it("renders days as a grid of weeks with column headers", () => {
+      // May 2024 starts on Wednesday
+      create({
+        defaultDate: "2024-05-15",
+        locale: { ...English, firstDayOfWeek: 1 },
+      });
+
+      const grid = fp.days;
+      expect(grid.getAttribute("role")).toBe("grid");
+      expect(grid.getAttribute("aria-label")).toBe("May 2024");
+      expect(grid.hasAttribute("aria-multiselectable")).toBe(false);
+
+      const rows = grid.querySelectorAll(":scope > [role=row]");
+      expect(rows.length).toBe(7);
+
+      const headers = rows[0].querySelectorAll("[role=columnheader]");
+      expect(
+        Array.prototype.map.call(headers, (h: Element) => h.textContent)
+      ).toEqual([
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ]);
+      expect(headers[2].getAttribute("aria-colindex")).toBe("3");
+
+      for (let i = 1; i < rows.length; i++) {
+        const cells = rows[i].querySelectorAll("[role=gridcell]");
+        expect(cells.length).toBe(7);
+        expect(cells[0].getAttribute("aria-colindex")).toBe("1");
+        expect(cells[6].getAttribute("aria-colindex")).toBe("7");
+      }
+
+      // May 1st is a Wednesday -> third column of the first week
+      const first = rows[1].querySelectorAll("[role=gridcell]")[2];
+      expect(first.getAttribute("aria-label")).toBe("May 1, 2024");
+
+      // visible abbreviated headers are replaced by the grid's headers
+      expect(fp.weekdayContainer!.getAttribute("aria-hidden")).toBe("true");
+    });
+
+    it("marks a grid as multiselectable and range days as selected", () => {
+      create({
+        mode: "range",
+        defaultDate: ["2024-05-10", "2024-05-12"],
+        showMonths: 2,
+      });
+
+      const grids = fp.daysContainer!.querySelectorAll("[role=grid]");
+      expect(grids.length).toBe(2);
+      expect(grids[1].getAttribute("aria-label")).toBe("June 2024");
+      expect(grids[0].getAttribute("aria-multiselectable")).toBe("true");
+
+      const selected = Array.prototype.map.call(
+        grids[0].querySelectorAll("[aria-selected=true]"),
+        (d: Element) => d.getAttribute("aria-label")
+      );
+      expect(selected).toEqual([
+        "May 10, 2024",
+        "May 11, 2024",
+        "May 12, 2024",
+      ]);
+    });
+
+    it("Space selects the focused day", () => {
+      create({ defaultDate: "2024-05-15", closeOnSelect: false });
+      fp.open();
+      const day = dayAt(20);
+      day.focus();
+
+      key(day, 32);
+      expect(fp.selectedDates[0].getDate()).toBe(18);
     });
 
     it("keeps exactly one day in the tab sequence", () => {
@@ -1996,7 +2068,7 @@ describe("flatpickr", () => {
       expect(tabbableDays().length).toBe(1);
 
       fp.open();
-      const day = fp.days.childNodes[20] as DayElement;
+      const day = dayAt(20) as DayElement;
       day.focus();
       expect(tabbableDays()).toEqual([day]);
     });
