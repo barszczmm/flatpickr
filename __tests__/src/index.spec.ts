@@ -3,6 +3,7 @@ import { French } from "l10n/fr";
 import { Irish } from "l10n/ga";
 import { Japanese } from "l10n/ja";
 import { Russian } from "l10n/ru";
+import { english as English } from "l10n/default";
 import { Instance, DayElement } from "types/instance";
 import { Options, DateRangeLimit } from "types/options";
 import confirmDatePlugin from "plugins/confirmDate/confirmDate";
@@ -1918,6 +1919,190 @@ describe("flatpickr", () => {
         simulate("blur", fp._input);
         expect(timesFired).toEqual(0);
       });
+    });
+  });
+
+  describe("accessibility", () => {
+    // other tests change the default locale
+    const create = (config: Options = {}) =>
+      createInstance({ locale: English, ...config });
+
+    const key = (target: Node, keyCode: number, extra = {}) =>
+      simulate("keydown", target, { keyCode, ...extra }, KeyboardEvent);
+
+    const tabbableDays = () =>
+      Array.prototype.filter.call(
+        fp.calendarContainer.querySelectorAll(".flatpickr-day"),
+        (d: DayElement) => d.tabIndex === 0
+      ) as DayElement[];
+
+    it("renders interactive elements as buttons", () => {
+      create({ enableTime: true });
+
+      expect(fp.days.querySelector(".flatpickr-day")!.tagName).toBe("BUTTON");
+      expect(fp.prevMonthNav.tagName).toBe("BUTTON");
+      expect(fp.nextMonthNav.tagName).toBe("BUTTON");
+      expect(fp.amPM!.tagName).toBe("BUTTON");
+      expect(fp.prevMonthNav.getAttribute("aria-label")).toBe("Previous month");
+      expect(fp.nextMonthNav.getAttribute("aria-label")).toBe("Next month");
+      expect(
+        fp.calendarContainer.querySelectorAll("button:not([type=button])")
+          .length
+      ).toBe(0);
+    });
+
+    it("exposes the calendar as a dialog controlled by the input", () => {
+      create();
+
+      expect(fp.calendarContainer.getAttribute("role")).toBe("dialog");
+      expect(fp.calendarContainer.getAttribute("aria-label")).toBe(
+        "Choose date"
+      );
+      expect(fp._input.getAttribute("aria-haspopup")).toBe("dialog");
+      expect(fp._input.getAttribute("aria-controls")).toBe(
+        fp.calendarContainer.id
+      );
+      expect(document.getElementById(fp.calendarContainer.id)).toBe(
+        fp.calendarContainer
+      );
+
+      create({ inline: true });
+      expect(fp.calendarContainer.getAttribute("role")).toBe("group");
+      expect(fp._input.hasAttribute("aria-haspopup")).toBe(false);
+    });
+
+    it("marks selected and disabled days", () => {
+      create({
+        defaultDate: "2024-05-15",
+        disable: ["2024-05-20"],
+      });
+
+      const selected = fp.selectedDateElem!;
+      expect(selected.getAttribute("aria-pressed")).toBe("true");
+
+      const disabled = Array.prototype.filter.call(
+        fp.days.childNodes,
+        (d: DayElement) => d.getAttribute("aria-label") === "May 20, 2024"
+      )[0] as DayElement;
+      expect(disabled.getAttribute("aria-disabled")).toBe("true");
+    });
+
+    it("keeps exactly one day in the tab sequence", () => {
+      create({ defaultDate: "2024-05-15" });
+
+      expect(tabbableDays()).toEqual([fp.selectedDateElem]);
+
+      fp.changeMonth(1);
+      expect(tabbableDays().length).toBe(1);
+
+      fp.open();
+      const day = fp.days.childNodes[20] as DayElement;
+      day.focus();
+      expect(tabbableDays()).toEqual([day]);
+    });
+
+    it("announces the shown month", () => {
+      create({ defaultDate: "2024-05-15" });
+      expect(fp.monthAnnouncer!.getAttribute("aria-live")).toBe("polite");
+      expect(fp.monthAnnouncer!.textContent).toBe("May 2024");
+
+      fp.changeMonth(1);
+      expect(fp.monthAnnouncer!.textContent).toBe("June 2024");
+    });
+
+    it("Escape closes the calendar when typing into the input", () => {
+      create({ allowInput: true });
+      fp._input.focus();
+      fp.open();
+      expect(fp.isOpen).toBe(true);
+
+      key(fp._input, 27);
+      expect(fp.isOpen).toBe(false);
+    });
+
+    it("Escape closes the calendar from any calendar control", () => {
+      create();
+      fp.open();
+      fp.nextMonthNav.focus();
+
+      key(fp.nextMonthNav, 27);
+      expect(fp.isOpen).toBe(false);
+      expect(document.activeElement).toBe(fp._input);
+    });
+
+    it("ArrowDown reopens a closed calendar", () => {
+      create();
+      fp._input.focus();
+      fp.close();
+
+      key(fp._input, 40);
+      expect(fp.isOpen).toBe(true);
+    });
+
+    it("Tab moves focus through the calendar and back to the input", () => {
+      create({ defaultDate: "2024-05-15" });
+      fp._input.focus();
+      fp.open();
+
+      const expected = [
+        fp.prevMonthNav,
+        fp.monthsDropdownContainer,
+        fp.currentYearElement,
+        fp.nextMonthNav,
+        fp.selectedDateElem,
+      ];
+
+      for (const target of expected) {
+        key(document.activeElement!, 9);
+        expect(document.activeElement).toBe(target);
+      }
+
+      key(document.activeElement!, 9, { shiftKey: true });
+      expect(document.activeElement).toBe(fp.nextMonthNav);
+
+      fp.prevMonthNav.focus();
+      key(fp.prevMonthNav, 9, { shiftKey: true });
+      expect(document.activeElement).toBe(fp._input);
+      expect(fp.isOpen).toBe(true);
+
+      fp.selectedDateElem!.focus();
+      key(fp.selectedDateElem!, 9);
+      expect(document.activeElement).toBe(fp._input);
+      expect(fp.isOpen).toBe(false);
+    });
+
+    it("Enter activates month navigation buttons natively", () => {
+      create({ defaultDate: "2024-05-15" });
+      fp.open();
+      fp.nextMonthNav.focus();
+
+      const event = new KeyboardEvent("keydown", {
+        keyCode: 13,
+        bubbles: true,
+        cancelable: true,
+      } as KeyboardEventInit);
+      fp.nextMonthNav.dispatchEvent(event);
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(fp.selectedDates[0].getDate()).toBe(15);
+    });
+
+    it("PageDown / PageUp change month and keep the day of month", () => {
+      create({ defaultDate: "2024-01-31" });
+      fp.open();
+      fp.selectedDateElem!.focus();
+
+      key(fp.selectedDateElem!, 34);
+      expect(fp.currentMonth).toBe(1);
+      expect(
+        (document.activeElement as DayElement).getAttribute("aria-label")
+      ).toBe("February 29, 2024");
+
+      key(document.activeElement!, 33, { shiftKey: true });
+      expect(fp.currentYear).toBe(2023);
+      expect(
+        (document.activeElement as DayElement).getAttribute("aria-label")
+      ).toBe("February 28, 2023");
     });
   });
 

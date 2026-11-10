@@ -84,11 +84,13 @@ function monthSelectPlugin(pluginConfig?: Partial<Config>): Plugin {
         )
           month.classList.add("today");
         month.textContent = monthToStr(i, config.shorthand, fp.l10n);
+        month.setAttribute("aria-label", fp.formatDate(month.dateObj, "F Y"));
         month.addEventListener("click", selectMonth);
         frag.appendChild(month);
       }
 
       self.monthsContainer.appendChild(frag);
+      updateMonthsTabIndex();
       if (
         fp.config.minDate &&
         fp.currentYear === fp.config.minDate.getFullYear()
@@ -123,6 +125,10 @@ function monthSelectPlugin(pluginConfig?: Partial<Config>): Plugin {
         buildMonths();
       });
 
+      fp._bind(self.monthsContainer as HTMLElement, "focusin", (e) =>
+        updateMonthsTabIndex(getEventTarget(e) as Element)
+      );
+
       fp._bind(
         self.monthsContainer as HTMLElement,
         "mouseover",
@@ -146,6 +152,7 @@ function monthSelectPlugin(pluginConfig?: Partial<Config>): Plugin {
 
       for (let index = 0; index < currentlySelected.length; index++) {
         currentlySelected[index].classList.remove("selected");
+        currentlySelected[index].removeAttribute("aria-pressed");
       }
 
       const targetMonth = fp.selectedDates[0].getMonth();
@@ -155,7 +162,10 @@ function monthSelectPlugin(pluginConfig?: Partial<Config>): Plugin {
 
       if (month) {
         month.classList.add("selected");
+        month.setAttribute("aria-pressed", "true");
       }
+
+      updateMonthsTabIndex();
     }
 
     function selectYear() {
@@ -191,6 +201,33 @@ function monthSelectPlugin(pluginConfig?: Partial<Config>): Plugin {
         });
       }
       setCurrentlySelected();
+    }
+
+    /**
+     * Makes exactly one month reachable with the Tab key (roving tabindex),
+     * the others are reachable with the arrow keys.
+     */
+    function updateMonthsTabIndex(target?: Element | null) {
+      if (!self.monthsContainer) return;
+
+      const months = Array.prototype.slice.call(
+        self.monthsContainer.children
+      ) as HTMLElement[];
+      const isUsable = (elem?: Element | null): elem is HTMLElement =>
+        !!elem &&
+        months.indexOf(elem as HTMLElement) !== -1 &&
+        !elem.classList.contains("flatpickr-disabled");
+
+      const newTarget = isUsable(target)
+        ? target
+        : months.filter((m) => m.classList.contains("selected"))[0] ||
+          months.filter((m) => m.classList.contains("today"))[0];
+
+      const tabbable = isUsable(newTarget)
+        ? newTarget
+        : months.filter((m) => isUsable(m))[0];
+
+      months.forEach((m) => (m.tabIndex = m === tabbable ? 0 : -1));
     }
 
     function selectMonth(e: Event) {
@@ -285,6 +322,8 @@ function monthSelectPlugin(pluginConfig?: Partial<Config>): Plugin {
         e.keyCode === 13 &&
         self.monthsContainer.contains(document.activeElement)
       ) {
+        // months are buttons, don't let Enter also trigger a click
+        e.preventDefault();
         setMonth((document.activeElement as MonthElement).dateObj);
       }
     }

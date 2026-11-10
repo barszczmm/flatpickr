@@ -60,6 +60,10 @@ export function createNumberInput(
   if (opts !== undefined)
     for (const key in opts) numInput.setAttribute(key, opts[key]);
 
+  // arrows are mouse-only helpers, keyboard users use the arrow keys instead
+  arrowUp.setAttribute("aria-hidden", "true");
+  arrowDown.setAttribute("aria-hidden", "true");
+
   wrapper.appendChild(numInput);
   wrapper.appendChild(arrowUp);
   wrapper.appendChild(arrowDown);

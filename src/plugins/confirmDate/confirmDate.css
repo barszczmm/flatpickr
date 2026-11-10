@@ -1,4 +1,13 @@
 .flatpickr-confirm {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font: inherit;
+	color: inherit;
+	overflow: hidden;
 	height: 40px;
 	max-height: 0px;
 	visibility: hidden;
