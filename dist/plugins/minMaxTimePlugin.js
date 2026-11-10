@@ -217,6 +217,11 @@
       monthAriaLabel: "Month",
       hourAriaLabel: "Hour",
       minuteAriaLabel: "Minute",
+      secondAriaLabel: "Second",
+      prevMonthAriaLabel: "Previous month",
+      nextMonthAriaLabel: "Next month",
+      datePickerAriaLabel: "Choose date",
+      timePickerAriaLabel: "Choose time",
       time_24hr: false,
   };
 

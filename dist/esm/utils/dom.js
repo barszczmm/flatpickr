@@ -35,6 +35,8 @@ export function createNumberInput(inputClassName, opts) {
     if (opts !== undefined)
         for (var key in opts)
             numInput.setAttribute(key, opts[key]);
+    arrowUp.setAttribute("aria-hidden", "true");
+    arrowDown.setAttribute("aria-hidden", "true");
     wrapper.appendChild(numInput);
     wrapper.appendChild(arrowUp);
     wrapper.appendChild(arrowDown);

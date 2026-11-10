@@ -19,6 +19,7 @@ export interface Elements {
     days: HTMLDivElement;
     weekWrapper?: HTMLDivElement;
     weekNumbers?: HTMLDivElement;
+    monthAnnouncer?: HTMLDivElement;
     monthNav: HTMLDivElement;
     monthsDropdownContainer: HTMLSelectElement;
     yearElements: HTMLInputElement[];
@@ -33,7 +34,7 @@ export interface Elements {
     hourElement?: HTMLInputElement;
     minuteElement?: HTMLInputElement;
     secondElement?: HTMLInputElement;
-    amPM?: HTMLSpanElement;
+    amPM?: HTMLButtonElement;
     pluginElements: Node[];
 }
 export interface Formatting {
@@ -112,7 +113,7 @@ export interface FlatpickrFn {
     formatDate: (date: Date, format: string) => string;
     compareDates: (date1: Date, date2: Date, timeless?: boolean) => number;
 }
-export declare type DayElement = HTMLSpanElement & {
+export declare type DayElement = HTMLButtonElement & {
     dateObj: Date;
     $i: number;
 };

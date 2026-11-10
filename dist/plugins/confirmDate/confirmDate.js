@@ -68,12 +68,15 @@
                         e.preventDefault();
                         confirmContainer.focus();
                     }
-                    else if (e.key === "Enter" && eventTarget === confirmContainer)
+                    else if (e.key === "Enter" && eventTarget === confirmContainer) {
+                        // it is a button, don't let Enter also trigger a click
+                        e.preventDefault();
                         fp.close();
+                    }
                 },
                 onReady: function () {
-                    confirmContainer = fp._createElement("div", confirmButtonCSSClass + " " + (config.showAlways ? "visible" : "") + " " + config.theme + "Theme", config.confirmText);
-                    confirmContainer.tabIndex = -1;
+                    confirmContainer = fp._createElement("button", confirmButtonCSSClass + " " + (config.showAlways ? "visible" : "") + " " + config.theme + "Theme", config.confirmText);
+                    confirmContainer.type = "button";
                     confirmContainer.innerHTML += config.confirmIcon;
                     confirmContainer.addEventListener("click", fp.close);
                     fp.calendarContainer.appendChild(confirmContainer);

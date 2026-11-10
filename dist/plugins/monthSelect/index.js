@@ -92,10 +92,12 @@
                         month.dateObj.getFullYear() === new Date().getFullYear())
                         month.classList.add("today");
                     month.textContent = monthToStr(i, config.shorthand, fp.l10n);
+                    month.setAttribute("aria-label", fp.formatDate(month.dateObj, "F Y"));
                     month.addEventListener("click", selectMonth);
                     frag.appendChild(month);
                 }
                 self.monthsContainer.appendChild(frag);
+                updateMonthsTabIndex();
                 if (fp.config.minDate &&
                     fp.currentYear === fp.config.minDate.getFullYear())
                     fp.prevMonthNav.classList.add("flatpickr-disabled");
@@ -122,6 +124,9 @@
                     selectYear();
                     buildMonths();
                 });
+                fp._bind(self.monthsContainer, "focusin", function (e) {
+                    return updateMonthsTabIndex(getEventTarget(e));
+                });
                 fp._bind(self.monthsContainer, "mouseover", function (e) {
                     if (fp.config.mode === "range")
                         fp.onMouseOver(getEventTarget(e), "flatpickr-monthSelect-month");
@@ -135,12 +140,15 @@
                 var currentlySelected = fp.rContainer.querySelectorAll(".flatpickr-monthSelect-month.selected");
                 for (var index = 0; index < currentlySelected.length; index++) {
                     currentlySelected[index].classList.remove("selected");
+                    currentlySelected[index].removeAttribute("aria-pressed");
                 }
                 var targetMonth = fp.selectedDates[0].getMonth();
                 var month = fp.rContainer.querySelector(".flatpickr-monthSelect-month:nth-child(" + (targetMonth + 1) + ")");
                 if (month) {
                     month.classList.add("selected");
+                    month.setAttribute("aria-pressed", "true");
                 }
+                updateMonthsTabIndex();
             }
             function selectYear() {
                 var selectedDate = fp.selectedDates[0];
@@ -170,6 +178,28 @@
                     });
                 }
                 setCurrentlySelected();
+            }
+            /**
+             * Makes exactly one month reachable with the Tab key (roving tabindex),
+             * the others are reachable with the arrow keys.
+             */
+            function updateMonthsTabIndex(target) {
+                if (!self.monthsContainer)
+                    return;
+                var months = Array.prototype.slice.call(self.monthsContainer.children);
+                var isUsable = function (elem) {
+                    return !!elem &&
+                        months.indexOf(elem) !== -1 &&
+                        !elem.classList.contains("flatpickr-disabled");
+                };
+                var newTarget = isUsable(target)
+                    ? target
+                    : months.filter(function (m) { return m.classList.contains("selected"); })[0] ||
+                        months.filter(function (m) { return m.classList.contains("today"); })[0];
+                var tabbable = isUsable(newTarget)
+                    ? newTarget
+                    : months.filter(function (m) { return isUsable(m); })[0];
+                months.forEach(function (m) { return (m.tabIndex = m === tabbable ? 0 : -1); });
             }
             function selectMonth(e) {
                 e.preventDefault();
@@ -237,6 +267,8 @@
                 }
                 else if (e.keyCode === 13 &&
                     self.monthsContainer.contains(document.activeElement)) {
+                    // months are buttons, don't let Enter also trigger a click
+                    e.preventDefault();
                     setMonth(document.activeElement.dateObj);
                 }
             }
