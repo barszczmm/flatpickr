@@ -9,11 +9,16 @@ export type PlusWeeks = {
 
 function weekSelectPlugin(): Plugin<PlusWeeks> {
   return function (fp) {
+    // days are grouped in week rows, so they are not direct children
+    function getDays() {
+      return fp.days.querySelectorAll(".flatpickr-day");
+    }
+
     function onDayHover(event: MouseEvent) {
       const day = getEventTarget(event) as DayElement;
       if (!day.classList.contains("flatpickr-day")) return;
 
-      const days = fp.days.childNodes;
+      const days = getDays();
       const dayIndex = day.$i;
 
       const dayIndSeven = dayIndex / 7;
@@ -39,14 +44,14 @@ function weekSelectPlugin(): Plugin<PlusWeeks> {
         selDate.getMonth() === fp.currentMonth &&
         selDate.getFullYear() === fp.currentYear
       ) {
-        fp.weekStartDay = (fp.days.childNodes[
+        fp.weekStartDay = (getDays()[
           7 * Math.floor((fp.selectedDateElem as DayElement).$i / 7)
         ] as DayElement).dateObj;
-        fp.weekEndDay = (fp.days.childNodes[
+        fp.weekEndDay = (getDays()[
           7 * Math.ceil((fp.selectedDateElem as DayElement).$i / 7 + 0.01) - 1
         ] as DayElement).dateObj;
       }
-      const days = fp.days.childNodes;
+      const days = getDays();
       for (let i = days.length; i--; ) {
         const date = (days[i] as DayElement).dateObj;
         if (date >= fp.weekStartDay && date <= fp.weekEndDay)
@@ -55,7 +60,7 @@ function weekSelectPlugin(): Plugin<PlusWeeks> {
     }
 
     function clearHover() {
-      const days = fp.days.childNodes;
+      const days = getDays();
       for (let i = days.length; i--; )
         (days[i] as Element).classList.remove("inRange");
     }

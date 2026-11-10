@@ -715,12 +715,11 @@ function FlatpickrInstance(
   ) {
     const dateIsEnabled = isEnabled(date, true),
       dayElement = createElement<DayElement>(
-        "button",
+        "span",
         className,
         date.getDate().toString()
       );
 
-    dayElement.type = "button";
     // only one day at a time is reachable with Tab (roving tabindex),
     // see updateDaysTabIndex()
     dayElement.tabIndex = -1;
@@ -747,7 +746,6 @@ function FlatpickrInstance(
     if (dateIsEnabled) {
       if (isDateSelected(date)) {
         dayElement.classList.add("selected");
-        dayElement.setAttribute("aria-pressed", "true");
         self.selectedDateElem = dayElement;
 
         if (self.config.mode === "range") {
@@ -796,6 +794,15 @@ function FlatpickrInstance(
   }
 
   /**
+   * Days of one month grid, in visual order (index equals DayElement.$i)
+   */
+  function getMonthDays(monthContainer: Element): DayElement[] {
+    return Array.prototype.slice.call(
+      monthContainer.querySelectorAll(".flatpickr-day")
+    );
+  }
+
+  /**
    * Makes exactly one day reachable with the Tab key (roving tabindex).
    * Other days are reachable with the arrow keys.
    */
@@ -833,12 +840,14 @@ function FlatpickrInstance(
     const endMonth = delta > 0 ? self.config.showMonths : -1;
 
     for (let m = startMonth; m != endMonth; m += delta) {
-      const month = (self.daysContainer as HTMLDivElement).children[m];
-      const startIndex = delta > 0 ? 0 : month.children.length - 1;
-      const endIndex = delta > 0 ? month.children.length : -1;
+      const days = getMonthDays(
+        (self.daysContainer as HTMLDivElement).children[m]
+      );
+      const startIndex = delta > 0 ? 0 : days.length - 1;
+      const endIndex = delta > 0 ? days.length : -1;
 
       for (let i = startIndex; i != endIndex; i += delta) {
-        const c = month.children[i] as DayElement;
+        const c = days[i];
         if (c.className.indexOf("hidden") === -1 && isEnabled(c.dateObj))
           return c;
       }
@@ -851,11 +860,13 @@ function FlatpickrInstance(
    * or the closest available day of that month if it is disabled.
    */
   function getDayInCurrentMonth(dayOfMonth: number) {
-    const month = (self.daysContainer as HTMLDivElement).children[0];
+    const days = getMonthDays(
+      (self.daysContainer as HTMLDivElement).children[0]
+    );
     let closest: DayElement | undefined;
 
-    for (let i = 0; i < month.children.length; i++) {
-      const c = month.children[i] as DayElement;
+    for (let i = 0; i < days.length; i++) {
+      const c = days[i];
       if (c.dateObj.getMonth() !== self.currentMonth || !isInView(c)) continue;
       if (
         closest === undefined ||
@@ -873,17 +884,16 @@ function FlatpickrInstance(
    * Disabled days are skipped, moving towards the given day.
    */
   function getWeekBoundaryDay(current: DayElement, first: boolean) {
-    const days = (current.parentNode as HTMLElement).children;
-    const rowStart = current.$i - (current.$i % 7);
-    const rowEnd = Math.min(rowStart + 6, days.length - 1);
+    const days = getMonthDays(current.parentNode as HTMLElement);
+    const currentIndex = days.indexOf(current);
     const step = first ? 1 : -1;
 
     for (
-      let i = first ? rowStart : rowEnd;
-      first ? i <= current.$i : i >= current.$i;
+      let i = first ? 0 : days.length - 1;
+      first ? i <= currentIndex : i >= currentIndex;
       i += step
     ) {
-      const day = days[i] as DayElement;
+      const day = days[i];
       if (isInView(day)) return day;
     }
 
@@ -903,21 +913,23 @@ function FlatpickrInstance(
       m != endMonth;
       m += loopDelta
     ) {
-      const month = (self.daysContainer as HTMLDivElement).children[m];
+      const days = getMonthDays(
+        (self.daysContainer as HTMLDivElement).children[m]
+      );
       const startIndex =
         givenMonth - self.currentMonth === m
           ? current.$i + delta
           : delta < 0
-          ? month.children.length - 1
+          ? days.length - 1
           : 0;
-      const numMonthDays = month.children.length;
+      const numMonthDays = days.length;
 
       for (
         let i = startIndex;
         i >= 0 && i < numMonthDays && i != (delta > 0 ? numMonthDays : -1);
         i += loopDelta
       ) {
-        const c = month.children[i] as DayElement;
+        const c = days[i];
         if (
           c.className.indexOf("hidden") === -1 &&
           isEnabled(c.dateObj) &&
@@ -1015,10 +1027,58 @@ function FlatpickrInstance(
       );
     }
 
-    //updateNavigationCurrentMonth();
+    return buildMonthGrid(year, month, days);
+  }
 
+  /**
+   * Arranges days into an ARIA grid: a (visually hidden) row of column
+   * headers followed by one row per week, so screen readers can announce
+   * the day of week and navigate by rows and columns.
+   */
+  function buildMonthGrid(year: number, month: number, days: DocumentFragment) {
     const dayContainer = createElement<HTMLDivElement>("div", "dayContainer");
-    dayContainer.appendChild(days);
+    dayContainer.setAttribute("role", "grid");
+    dayContainer.setAttribute(
+      "aria-label",
+      self.formatDate(new Date(year, month, 1), "F Y")
+    );
+    if (self.config.mode !== "single")
+      dayContainer.setAttribute("aria-multiselectable", "true");
+
+    const headerRow = createElement<HTMLDivElement>("div", "flatpickr-sr-only");
+    headerRow.setAttribute("role", "row");
+    getOrderedWeekdays("longhand").forEach((weekday, i) => {
+      const header = createElement("span", "", weekday);
+      header.setAttribute("role", "columnheader");
+      header.setAttribute("aria-colindex", (i + 1).toString());
+      headerRow.appendChild(header);
+    });
+    dayContainer.appendChild(headerRow);
+
+    const dayElements = Array.prototype.slice.call(
+      days.childNodes
+    ) as DayElement[];
+    let row: HTMLDivElement | undefined;
+
+    dayElements.forEach((day, i) => {
+      if (i % 7 === 0) {
+        row = createElement<HTMLDivElement>("div", "dayRow");
+        row.setAttribute("role", "row");
+        dayContainer.appendChild(row);
+      }
+
+      day.setAttribute("role", "gridcell");
+      // keeps columns right when hidden days are left out of the a11y tree
+      day.setAttribute("aria-colindex", ((i % 7) + 1).toString());
+      day.setAttribute(
+        "aria-selected",
+        day.classList.contains("selected") || day.classList.contains("inRange")
+          ? "true"
+          : "false"
+      );
+
+      (row as HTMLDivElement).appendChild(day);
+    });
 
     return dayContainer;
   }
@@ -1389,15 +1449,10 @@ function FlatpickrInstance(
       return;
     }
 
-    const firstDayOfWeek = self.l10n.firstDayOfWeek;
-    let weekdays = [...self.l10n.weekdays.shorthand];
+    const weekdays = getOrderedWeekdays("shorthand");
 
-    if (firstDayOfWeek > 0 && firstDayOfWeek < weekdays.length) {
-      weekdays = [
-        ...weekdays.splice(firstDayOfWeek, weekdays.length),
-        ...weekdays.splice(0, firstDayOfWeek),
-      ];
-    }
+    // screen readers get full weekday names from the day grids instead
+    self.weekdayContainer.setAttribute("aria-hidden", "true");
 
     for (let i = self.config.showMonths; i--; ) {
       self.weekdayContainer.children[i].innerHTML = `
@@ -1406,6 +1461,20 @@ function FlatpickrInstance(
       </span>
       `;
     }
+  }
+
+  function getOrderedWeekdays(format: "shorthand" | "longhand") {
+    const firstDayOfWeek = self.l10n.firstDayOfWeek;
+    let weekdays = [...self.l10n.weekdays[format]];
+
+    if (firstDayOfWeek > 0 && firstDayOfWeek < weekdays.length) {
+      weekdays = [
+        ...weekdays.splice(firstDayOfWeek, weekdays.length),
+        ...weekdays.splice(0, firstDayOfWeek),
+      ];
+    }
+
+    return weekdays;
   }
 
   /* istanbul ignore next */
@@ -1851,6 +1920,7 @@ function FlatpickrInstance(
     // "Backspace"                        8
     // "Tab"                              9
     // "Enter"                           13
+    // " " (Space)                       32
     // "Escape"     (IE "Esc")           27
     // "PageUp"                          33
     // "PageDown"                        34
@@ -1924,6 +1994,10 @@ function FlatpickrInstance(
         self.yearElements.indexOf(eventTarget as HTMLInputElement) === -1;
 
       switch (e.keyCode) {
+        case 32:
+          if (isDay) selectDate(e);
+          break;
+
         case 13:
           if (isTimeObj && eventTarget !== self.amPM) {
             e.preventDefault();
@@ -2066,7 +2140,7 @@ function FlatpickrInstance(
 
     const hoverDate = elem
         ? elem.dateObj.getTime()
-        : (self.days.firstElementChild as DayElement).dateObj.getTime(),
+        : getMonthDays(self.days)[0].dateObj.getTime(),
       initialDate = (self.parseDate(
         self.selectedDates[0],
         undefined,
@@ -2092,7 +2166,9 @@ function FlatpickrInstance(
 
     const hoverableCells = Array.from(
       self.rContainer!.querySelectorAll(
-        `*:nth-child(-n+${self.config.showMonths}) > .${cellClass}`
+        cellClass === "flatpickr-day"
+          ? `.dayContainer:nth-child(-n+${self.config.showMonths}) .${cellClass}`
+          : `*:nth-child(-n+${self.config.showMonths}) > .${cellClass}`
       )
     ) as DayElement[];
 

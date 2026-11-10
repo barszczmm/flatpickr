@@ -28,23 +28,25 @@ $selectedDayForeground = #fff
 	padding 0
 	border-right 0
 
-span.flatpickr-day, button.flatpickr-day
+span.flatpickr-day
 	&, &.prevMonthDay, &.nextMonthDay
 		border-radius 0 !important
 		border 1px solid $dayHoverBackground
 		max-width none
 		border-right-color transparent
 
-		&:nth-child(n+8)
+		// first child of .dayContainer is the screen reader header row,
+		// so week rows are children 2-7
+		.dayRow:nth-child(n+3) &
 			border-top-color transparent
 
 		&:nth-child(7n-6)
 			border-left 0
 
-		&:nth-child(n+36)
+		.dayRow:nth-child(n+7) &
 			border-bottom 0
 
-		&:nth-child(-n+7)
+		.dayRow:nth-child(2) &
 			margin-top 0
 
 		&.today:not(.selected)
@@ -79,7 +81,7 @@ span.flatpickr-day, button.flatpickr-day
 
 @css {
 	@media screen and (min-width:0\0) and (min-resolution: +72dpi) {
-		span.flatpickr-day, button.flatpickr-day {
+		span.flatpickr-day {
 			display: block;
 			flex: 1 0 auto;
 		}
