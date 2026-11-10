@@ -1072,8 +1072,7 @@
                     : window.document.body).appendChild(self.calendarContainer);
         }
         function createDay(className, date, _dayNumber, i) {
-            var dateIsEnabled = isEnabled(date, true), dayElement = createElement("button", className, date.getDate().toString());
-            dayElement.type = "button";
+            var dateIsEnabled = isEnabled(date, true), dayElement = createElement("span", className, date.getDate().toString());
             // only one day at a time is reachable with Tab (roving tabindex),
             // see updateDaysTabIndex()
             dayElement.tabIndex = -1;
@@ -1092,7 +1091,6 @@
             if (dateIsEnabled) {
                 if (isDateSelected(date)) {
                     dayElement.classList.add("selected");
-                    dayElement.setAttribute("aria-pressed", "true");
                     self.selectedDateElem = dayElement;
                     if (self.config.mode === "range") {
                         toggleClass(dayElement, "startRange", self.selectedDates[0] &&
@@ -1120,6 +1118,12 @@
             }
             triggerEvent("onDayCreate", dayElement);
             return dayElement;
+        }
+        /**
+         * Days of one month grid, in visual order (index equals DayElement.$i)
+         */
+        function getMonthDays(monthContainer) {
+            return Array.prototype.slice.call(monthContainer.querySelectorAll(".flatpickr-day"));
         }
         /**
          * Makes exactly one day reachable with the Tab key (roving tabindex).
@@ -1154,11 +1158,11 @@
             var startMonth = delta > 0 ? 0 : self.config.showMonths - 1;
             var endMonth = delta > 0 ? self.config.showMonths : -1;
             for (var m = startMonth; m != endMonth; m += delta) {
-                var month = self.daysContainer.children[m];
-                var startIndex = delta > 0 ? 0 : month.children.length - 1;
-                var endIndex = delta > 0 ? month.children.length : -1;
+                var days = getMonthDays(self.daysContainer.children[m]);
+                var startIndex = delta > 0 ? 0 : days.length - 1;
+                var endIndex = delta > 0 ? days.length : -1;
                 for (var i = startIndex; i != endIndex; i += delta) {
-                    var c = month.children[i];
+                    var c = days[i];
                     if (c.className.indexOf("hidden") === -1 && isEnabled(c.dateObj))
                         return c;
                 }
@@ -1170,10 +1174,10 @@
          * or the closest available day of that month if it is disabled.
          */
         function getDayInCurrentMonth(dayOfMonth) {
-            var month = self.daysContainer.children[0];
+            var days = getMonthDays(self.daysContainer.children[0]);
             var closest;
-            for (var i = 0; i < month.children.length; i++) {
-                var c = month.children[i];
+            for (var i = 0; i < days.length; i++) {
+                var c = days[i];
                 if (c.dateObj.getMonth() !== self.currentMonth || !isInView(c))
                     continue;
                 if (closest === undefined ||
@@ -1188,11 +1192,10 @@
          * Disabled days are skipped, moving towards the given day.
          */
         function getWeekBoundaryDay(current, first) {
-            var days = current.parentNode.children;
-            var rowStart = current.$i - (current.$i % 7);
-            var rowEnd = Math.min(rowStart + 6, days.length - 1);
+            var days = getMonthDays(current.parentNode);
+            var currentIndex = days.indexOf(current);
             var step = first ? 1 : -1;
-            for (var i = first ? rowStart : rowEnd; first ? i <= current.$i : i >= current.$i; i += step) {
+            for (var i = first ? 0 : days.length - 1; first ? i <= currentIndex : i >= currentIndex; i += step) {
                 var day = days[i];
                 if (isInView(day))
                     return day;
@@ -1206,15 +1209,15 @@
             var endMonth = delta > 0 ? self.config.showMonths : -1;
             var loopDelta = delta > 0 ? 1 : -1;
             for (var m = givenMonth - self.currentMonth; m != endMonth; m += loopDelta) {
-                var month = self.daysContainer.children[m];
+                var days = getMonthDays(self.daysContainer.children[m]);
                 var startIndex = givenMonth - self.currentMonth === m
                     ? current.$i + delta
                     : delta < 0
-                        ? month.children.length - 1
+                        ? days.length - 1
                         : 0;
-                var numMonthDays = month.children.length;
+                var numMonthDays = days.length;
                 for (var i = startIndex; i >= 0 && i < numMonthDays && i != (delta > 0 ? numMonthDays : -1); i += loopDelta) {
-                    var c = month.children[i];
+                    var c = days[i];
                     if (c.className.indexOf("hidden") === -1 &&
                         isEnabled(c.dateObj) &&
                         Math.abs(current.$i - i) >= Math.abs(delta))
@@ -1265,9 +1268,44 @@
                 (self.config.showMonths === 1 || dayIndex % 7 !== 0); dayNum++, dayIndex++) {
                 days.appendChild(createDay("flatpickr-day " + nextMonthDayClass, new Date(year, month + 1, dayNum % daysInMonth), dayNum, dayIndex));
             }
-            //updateNavigationCurrentMonth();
+            return buildMonthGrid(year, month, days);
+        }
+        /**
+         * Arranges days into an ARIA grid: a (visually hidden) row of column
+         * headers followed by one row per week, so screen readers can announce
+         * the day of week and navigate by rows and columns.
+         */
+        function buildMonthGrid(year, month, days) {
             var dayContainer = createElement("div", "dayContainer");
-            dayContainer.appendChild(days);
+            dayContainer.setAttribute("role", "grid");
+            dayContainer.setAttribute("aria-label", self.formatDate(new Date(year, month, 1), "F Y"));
+            if (self.config.mode !== "single")
+                dayContainer.setAttribute("aria-multiselectable", "true");
+            var headerRow = createElement("div", "flatpickr-sr-only");
+            headerRow.setAttribute("role", "row");
+            getOrderedWeekdays("longhand").forEach(function (weekday, i) {
+                var header = createElement("span", "", weekday);
+                header.setAttribute("role", "columnheader");
+                header.setAttribute("aria-colindex", (i + 1).toString());
+                headerRow.appendChild(header);
+            });
+            dayContainer.appendChild(headerRow);
+            var dayElements = Array.prototype.slice.call(days.childNodes);
+            var row;
+            dayElements.forEach(function (day, i) {
+                if (i % 7 === 0) {
+                    row = createElement("div", "dayRow");
+                    row.setAttribute("role", "row");
+                    dayContainer.appendChild(row);
+                }
+                day.setAttribute("role", "gridcell");
+                // keeps columns right when hidden days are left out of the a11y tree
+                day.setAttribute("aria-colindex", ((i % 7) + 1).toString());
+                day.setAttribute("aria-selected", day.classList.contains("selected") || day.classList.contains("inRange")
+                    ? "true"
+                    : "false");
+                row.appendChild(day);
+            });
             return dayContainer;
         }
         function buildDays() {
@@ -1496,14 +1534,20 @@
             if (!self.weekdayContainer) {
                 return;
             }
-            var firstDayOfWeek = self.l10n.firstDayOfWeek;
-            var weekdays = __spreadArrays(self.l10n.weekdays.shorthand);
-            if (firstDayOfWeek > 0 && firstDayOfWeek < weekdays.length) {
-                weekdays = __spreadArrays(weekdays.splice(firstDayOfWeek, weekdays.length), weekdays.splice(0, firstDayOfWeek));
-            }
+            var weekdays = getOrderedWeekdays("shorthand");
+            // screen readers get full weekday names from the day grids instead
+            self.weekdayContainer.setAttribute("aria-hidden", "true");
             for (var i = self.config.showMonths; i--;) {
                 self.weekdayContainer.children[i].innerHTML = "\n      <span class='flatpickr-weekday'>\n        " + weekdays.join("</span><span class='flatpickr-weekday'>") + "\n      </span>\n      ";
             }
+        }
+        function getOrderedWeekdays(format) {
+            var firstDayOfWeek = self.l10n.firstDayOfWeek;
+            var weekdays = __spreadArrays(self.l10n.weekdays[format]);
+            if (firstDayOfWeek > 0 && firstDayOfWeek < weekdays.length) {
+                weekdays = __spreadArrays(weekdays.splice(firstDayOfWeek, weekdays.length), weekdays.splice(0, firstDayOfWeek));
+            }
+            return weekdays;
         }
         /* istanbul ignore next */
         function buildWeeks() {
@@ -1839,6 +1883,7 @@
             // "Backspace"                        8
             // "Tab"                              9
             // "Enter"                           13
+            // " " (Space)                       32
             // "Escape"     (IE "Esc")           27
             // "PageUp"                          33
             // "PageDown"                        34
@@ -1901,6 +1946,10 @@
                     self.monthNav.contains(eventTarget) &&
                     self.yearElements.indexOf(eventTarget) === -1;
                 switch (e.keyCode) {
+                    case 32:
+                        if (isDay)
+                            selectDate(e);
+                        break;
                     case 13:
                         if (isTimeObj && eventTarget !== self.amPM) {
                             e.preventDefault();
@@ -2026,7 +2075,7 @@
                 return;
             var hoverDate = elem
                 ? elem.dateObj.getTime()
-                : self.days.firstElementChild.dateObj.getTime(), initialDate = self.parseDate(self.selectedDates[0], undefined, true).getTime(), rangeStartDate = Math.min(hoverDate, self.selectedDates[0].getTime()), rangeEndDate = Math.max(hoverDate, self.selectedDates[0].getTime());
+                : getMonthDays(self.days)[0].dateObj.getTime(), initialDate = self.parseDate(self.selectedDates[0], undefined, true).getTime(), rangeStartDate = Math.min(hoverDate, self.selectedDates[0].getTime()), rangeEndDate = Math.max(hoverDate, self.selectedDates[0].getTime());
             var containsDisabled = false;
             var minRange = 0, maxRange = 0;
             for (var t = rangeStartDate; t < rangeEndDate; t += duration.DAY) {
@@ -2039,7 +2088,9 @@
                         maxRange = t;
                 }
             }
-            var hoverableCells = Array.from(self.rContainer.querySelectorAll("*:nth-child(-n+" + self.config.showMonths + ") > ." + cellClass));
+            var hoverableCells = Array.from(self.rContainer.querySelectorAll(cellClass === "flatpickr-day"
+                ? ".dayContainer:nth-child(-n+" + self.config.showMonths + ") ." + cellClass
+                : "*:nth-child(-n+" + self.config.showMonths + ") > ." + cellClass));
             hoverableCells.forEach(function (dayElem) {
                 var date = dayElem.dateObj;
                 var timestamp = date.getTime();

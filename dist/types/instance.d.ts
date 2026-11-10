@@ -113,7 +113,7 @@ export interface FlatpickrFn {
     formatDate: (date: Date, format: string) => string;
     compareDates: (date1: Date, date2: Date, timeless?: boolean) => number;
 }
-export declare type DayElement = HTMLButtonElement & {
+export declare type DayElement = HTMLSpanElement & {
     dateObj: Date;
     $i: number;
 };

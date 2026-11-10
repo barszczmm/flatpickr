@@ -535,6 +535,16 @@ span.flatpickr-weekday {
   -webkit-box-shadow: -1px 0 0 #eee;
           box-shadow: -1px 0 0 #eee;
 }
+.dayRow {
+  display: -ms-flexbox;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  width: 100%;
+  -ms-flex-pack: justify;
+  -webkit-justify-content: space-around;
+          justify-content: space-around;
+}
 .flatpickr-day {
   -webkit-appearance: none;
      -moz-appearance: none;
@@ -854,93 +864,60 @@ span.flatpickr-weekday {
   border-right: 0;
 }
 span.flatpickr-day,
-button.flatpickr-day,
 span.flatpickr-day.prevMonthDay,
-button.flatpickr-day.prevMonthDay,
-span.flatpickr-day.nextMonthDay,
-button.flatpickr-day.nextMonthDay {
+span.flatpickr-day.nextMonthDay {
   border-radius: 0 !important;
   border: 1px solid #e9e9e9;
   max-width: none;
   border-right-color: transparent;
 }
-span.flatpickr-day:nth-child(n+8),
-button.flatpickr-day:nth-child(n+8),
-span.flatpickr-day.prevMonthDay:nth-child(n+8),
-button.flatpickr-day.prevMonthDay:nth-child(n+8),
-span.flatpickr-day.nextMonthDay:nth-child(n+8),
-button.flatpickr-day.nextMonthDay:nth-child(n+8) {
+.dayRow:nth-child(n+3) span.flatpickr-day,
+.dayRow:nth-child(n+3) span.flatpickr-day.prevMonthDay,
+.dayRow:nth-child(n+3) span.flatpickr-day.nextMonthDay {
   border-top-color: transparent;
 }
 span.flatpickr-day:nth-child(7n-6),
-button.flatpickr-day:nth-child(7n-6),
 span.flatpickr-day.prevMonthDay:nth-child(7n-6),
-button.flatpickr-day.prevMonthDay:nth-child(7n-6),
-span.flatpickr-day.nextMonthDay:nth-child(7n-6),
-button.flatpickr-day.nextMonthDay:nth-child(7n-6) {
+span.flatpickr-day.nextMonthDay:nth-child(7n-6) {
   border-left: 0;
 }
-span.flatpickr-day:nth-child(n+36),
-button.flatpickr-day:nth-child(n+36),
-span.flatpickr-day.prevMonthDay:nth-child(n+36),
-button.flatpickr-day.prevMonthDay:nth-child(n+36),
-span.flatpickr-day.nextMonthDay:nth-child(n+36),
-button.flatpickr-day.nextMonthDay:nth-child(n+36) {
+.dayRow:nth-child(n+7) span.flatpickr-day,
+.dayRow:nth-child(n+7) span.flatpickr-day.prevMonthDay,
+.dayRow:nth-child(n+7) span.flatpickr-day.nextMonthDay {
   border-bottom: 0;
 }
-span.flatpickr-day:nth-child(-n+7),
-button.flatpickr-day:nth-child(-n+7),
-span.flatpickr-day.prevMonthDay:nth-child(-n+7),
-button.flatpickr-day.prevMonthDay:nth-child(-n+7),
-span.flatpickr-day.nextMonthDay:nth-child(-n+7),
-button.flatpickr-day.nextMonthDay:nth-child(-n+7) {
+.dayRow:nth-child(2) span.flatpickr-day,
+.dayRow:nth-child(2) span.flatpickr-day.prevMonthDay,
+.dayRow:nth-child(2) span.flatpickr-day.nextMonthDay {
   margin-top: 0;
 }
 span.flatpickr-day.today:not(.selected),
-button.flatpickr-day.today:not(.selected),
 span.flatpickr-day.prevMonthDay.today:not(.selected),
-button.flatpickr-day.prevMonthDay.today:not(.selected),
-span.flatpickr-day.nextMonthDay.today:not(.selected),
-button.flatpickr-day.nextMonthDay.today:not(.selected) {
+span.flatpickr-day.nextMonthDay.today:not(.selected) {
   border-color: #e9e9e9;
   border-right-color: transparent;
   border-top-color: transparent;
   border-bottom-color: #f64747;
 }
 span.flatpickr-day.today:not(.selected):hover,
-button.flatpickr-day.today:not(.selected):hover,
 span.flatpickr-day.prevMonthDay.today:not(.selected):hover,
-button.flatpickr-day.prevMonthDay.today:not(.selected):hover,
-span.flatpickr-day.nextMonthDay.today:not(.selected):hover,
-button.flatpickr-day.nextMonthDay.today:not(.selected):hover {
+span.flatpickr-day.nextMonthDay.today:not(.selected):hover {
   border: 1px solid #f64747;
 }
 span.flatpickr-day.startRange,
-button.flatpickr-day.startRange,
 span.flatpickr-day.prevMonthDay.startRange,
-button.flatpickr-day.prevMonthDay.startRange,
 span.flatpickr-day.nextMonthDay.startRange,
-button.flatpickr-day.nextMonthDay.startRange,
 span.flatpickr-day.endRange,
-button.flatpickr-day.endRange,
 span.flatpickr-day.prevMonthDay.endRange,
-button.flatpickr-day.prevMonthDay.endRange,
-span.flatpickr-day.nextMonthDay.endRange,
-button.flatpickr-day.nextMonthDay.endRange {
+span.flatpickr-day.nextMonthDay.endRange {
   border-color: #4f99ff;
 }
 span.flatpickr-day.today,
-button.flatpickr-day.today,
 span.flatpickr-day.prevMonthDay.today,
-button.flatpickr-day.prevMonthDay.today,
 span.flatpickr-day.nextMonthDay.today,
-button.flatpickr-day.nextMonthDay.today,
 span.flatpickr-day.selected,
-button.flatpickr-day.selected,
 span.flatpickr-day.prevMonthDay.selected,
-button.flatpickr-day.prevMonthDay.selected,
-span.flatpickr-day.nextMonthDay.selected,
-button.flatpickr-day.nextMonthDay.selected {
+span.flatpickr-day.nextMonthDay.selected {
   z-index: 2;
 }
 .rangeMode .flatpickr-day {
@@ -959,7 +936,7 @@ button.flatpickr-day.nextMonthDay.selected {
 }
 
 	@media screen and (min-width:0\0) and (min-resolution: +72dpi) {
-		span.flatpickr-day, button.flatpickr-day {
+		span.flatpickr-day {
 			display: block;
 			-webkit-box-flex: 1;
 			-webkit-flex: 1 0 auto;

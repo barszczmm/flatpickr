@@ -535,6 +535,16 @@ span.flatpickr-weekday {
   -webkit-box-shadow: -1px 0 0 #20222c;
           box-shadow: -1px 0 0 #20222c;
 }
+.dayRow {
+  display: -ms-flexbox;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  width: 100%;
+  -ms-flex-pack: justify;
+  -webkit-justify-content: space-around;
+          justify-content: space-around;
+}
 .flatpickr-day {
   -webkit-appearance: none;
      -moz-appearance: none;

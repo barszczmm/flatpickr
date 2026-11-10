@@ -19,11 +19,15 @@
 
   function weekSelectPlugin() {
       return function (fp) {
+          // days are grouped in week rows, so they are not direct children
+          function getDays() {
+              return fp.days.querySelectorAll(".flatpickr-day");
+          }
           function onDayHover(event) {
               var day = getEventTarget(event);
               if (!day.classList.contains("flatpickr-day"))
                   return;
-              var days = fp.days.childNodes;
+              var days = getDays();
               var dayIndex = day.$i;
               var dayIndSeven = dayIndex / 7;
               var weekStartDay = days[7 * Math.floor(dayIndSeven)]
@@ -43,10 +47,10 @@
               if (selDate !== undefined &&
                   selDate.getMonth() === fp.currentMonth &&
                   selDate.getFullYear() === fp.currentYear) {
-                  fp.weekStartDay = fp.days.childNodes[7 * Math.floor(fp.selectedDateElem.$i / 7)].dateObj;
-                  fp.weekEndDay = fp.days.childNodes[7 * Math.ceil(fp.selectedDateElem.$i / 7 + 0.01) - 1].dateObj;
+                  fp.weekStartDay = getDays()[7 * Math.floor(fp.selectedDateElem.$i / 7)].dateObj;
+                  fp.weekEndDay = getDays()[7 * Math.ceil(fp.selectedDateElem.$i / 7 + 0.01) - 1].dateObj;
               }
-              var days = fp.days.childNodes;
+              var days = getDays();
               for (var i = days.length; i--;) {
                   var date = days[i].dateObj;
                   if (date >= fp.weekStartDay && date <= fp.weekEndDay)
@@ -54,7 +58,7 @@
               }
           }
           function clearHover() {
-              var days = fp.days.childNodes;
+              var days = getDays();
               for (var i = days.length; i--;)
                   days[i].classList.remove("inRange");
           }
