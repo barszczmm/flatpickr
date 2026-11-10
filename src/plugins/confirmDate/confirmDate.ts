@@ -19,7 +19,7 @@ const defaultConfig: Config = {
 
 function confirmDatePlugin(pluginConfig: Config): Plugin {
   const config = { ...defaultConfig, ...pluginConfig };
-  let confirmContainer: HTMLDivElement;
+  let confirmContainer: HTMLButtonElement;
   const confirmButtonCSSClass = "flatpickr-confirm";
 
   return function (fp: Instance) {
@@ -39,20 +39,23 @@ function confirmDatePlugin(pluginConfig: Config): Plugin {
         ) {
           e.preventDefault();
           confirmContainer.focus();
-        } else if (e.key === "Enter" && eventTarget === confirmContainer)
+        } else if (e.key === "Enter" && eventTarget === confirmContainer) {
+          // it is a button, don't let Enter also trigger a click
+          e.preventDefault();
           fp.close();
+        }
       },
 
       onReady() {
-        confirmContainer = fp._createElement<HTMLDivElement>(
-          "div",
+        confirmContainer = fp._createElement<HTMLButtonElement>(
+          "button",
           `${confirmButtonCSSClass} ${config.showAlways ? "visible" : ""} ${
             config.theme
           }Theme`,
           config.confirmText
         );
 
-        confirmContainer.tabIndex = -1;
+        confirmContainer.type = "button";
         confirmContainer.innerHTML += config.confirmIcon;
 
         confirmContainer.addEventListener("click", fp.close);

@@ -24,6 +24,7 @@ export interface Elements {
 
   weekWrapper?: HTMLDivElement;
   weekNumbers?: HTMLDivElement;
+  monthAnnouncer?: HTMLDivElement;
 
   // month nav
   monthNav: HTMLDivElement;
@@ -47,7 +48,7 @@ export interface Elements {
   hourElement?: HTMLInputElement;
   minuteElement?: HTMLInputElement;
   secondElement?: HTMLInputElement;
-  amPM?: HTMLSpanElement;
+  amPM?: HTMLButtonElement;
 
   pluginElements: Node[];
 }
@@ -169,4 +170,4 @@ export interface FlatpickrFn {
   compareDates: (date1: Date, date2: Date, timeless?: boolean) => number;
 }
 
-export type DayElement = HTMLSpanElement & { dateObj: Date; $i: number };
+export type DayElement = HTMLButtonElement & { dateObj: Date; $i: number };
