@@ -868,6 +868,28 @@ function FlatpickrInstance(
     return closest !== undefined ? closest : getFirstAvailableDay(1);
   }
 
+  /**
+   * First (Home) or last (End) available day in the week of the given day.
+   * Disabled days are skipped, moving towards the given day.
+   */
+  function getWeekBoundaryDay(current: DayElement, first: boolean) {
+    const days = (current.parentNode as HTMLElement).children;
+    const rowStart = current.$i - (current.$i % 7);
+    const rowEnd = Math.min(rowStart + 6, days.length - 1);
+    const step = first ? 1 : -1;
+
+    for (
+      let i = first ? rowStart : rowEnd;
+      first ? i <= current.$i : i >= current.$i;
+      i += step
+    ) {
+      const day = days[i] as DayElement;
+      if (isInView(day)) return day;
+    }
+
+    return undefined;
+  }
+
   function getNextAvailableDay(current: DayElement, delta: number) {
     const givenMonth =
       current.className.indexOf("Month") === -1
@@ -1832,6 +1854,8 @@ function FlatpickrInstance(
     // "Escape"     (IE "Esc")           27
     // "PageUp"                          33
     // "PageDown"                        34
+    // "End"                             35
+    // "Home"                            36
     // "ArrowLeft"  (IE "Left")          37
     // "ArrowUp"    (IE "Up")            38
     // "ArrowRight" (IE "Right")         39
@@ -1931,6 +1955,18 @@ function FlatpickrInstance(
             if (e.shiftKey) changeYear(self.currentYear + delta);
             else changeMonth(delta);
             focusOnDay(getDayInCurrentMonth(dayOfMonth), 0);
+          }
+          break;
+
+        case 35:
+        case 36:
+          if (isDay) {
+            e.preventDefault();
+            const target = getWeekBoundaryDay(
+              eventTarget as DayElement,
+              e.keyCode === 36
+            );
+            if (target !== undefined) focusOnDayElem(target);
           }
           break;
 

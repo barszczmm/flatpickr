@@ -2087,6 +2087,34 @@ describe("flatpickr", () => {
       expect(fp.selectedDates[0].getDate()).toBe(15);
     });
 
+    it("Home / End move to the start / end of the week", () => {
+      // May 2024 starts on Wednesday, week starts on Sunday by default
+      create({ defaultDate: "2024-05-15", disable: ["2024-05-18"] });
+      fp.open();
+      fp.selectedDateElem!.focus();
+
+      const label = () =>
+        (document.activeElement as DayElement).getAttribute("aria-label");
+
+      key(fp.selectedDateElem!, 36);
+      expect(label()).toBe("May 12, 2024");
+
+      // Saturday 18th is disabled, so End stops at Friday
+      key(document.activeElement!, 35);
+      expect(label()).toBe("May 17, 2024");
+    });
+
+    it("Home / End reach days of the adjacent months in the same week", () => {
+      create({ defaultDate: "2024-05-02" });
+      fp.open();
+      fp.selectedDateElem!.focus();
+
+      key(fp.selectedDateElem!, 36);
+      expect(
+        (document.activeElement as DayElement).getAttribute("aria-label")
+      ).toBe("April 28, 2024");
+    });
+
     it("PageDown / PageUp change month and keep the day of month", () => {
       create({ defaultDate: "2024-01-31" });
       fp.open();
