@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>flatpickr test page</title>
+
+  <link rel="stylesheet" href="dist/flatpickr.css">
+  <link rel="stylesheet" id="theme-css" href="" disabled>
+  <link rel="stylesheet" href="dist/plugins/confirmDate/confirmDate.css">
+  <link rel="stylesheet" href="dist/plugins/monthSelect/style.css">
+
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+      color: #222;
+      background: #f6f7f9;
+    }
+    header {
+      padding: 16px 24px;
+      background: #fff;
+      border-bottom: 1px solid #e3e5e8;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      align-items: center;
+    }
+    header h1 { font-size: 20px; margin: 0; }
+    header .info { font-size: 13px; color: #666; }
+    header .controls { display: flex; gap: 16px; flex-wrap: wrap; margin-left: auto; }
+    header label { font-size: 14px; display: flex; gap: 6px; align-items: center; }
+    main {
+      padding: 24px;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+    section {
+      background: #fff;
+      border: 1px solid #e3e5e8;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    section h2 { font-size: 16px; margin: 0 0 4px; }
+    section p { font-size: 13px; color: #666; margin: 0 0 12px; }
+    section code { font-size: 12px; }
+    input.fp {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #c8ccd1;
+      border-radius: 4px;
+    }
+    .flatpickr-wrapper { width: 100%; }
+    .pair { display: flex; gap: 8px; }
+    output {
+      display: block;
+      margin-top: 8px;
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #555;
+      word-break: break-all;
+      min-height: 1.4em;
+    }
+    @media (max-width: 400px) {
+      header, main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>flatpickr test page</h1>
+      <div class="info" id="build-info">Using code from <code>dist/</code></div>
+    </div>
+    <div class="controls">
+      <label>Theme
+        <select id="theme">
+          <option value="">default</option>
+          <option>airbnb</option>
+          <option>confetti</option>
+          <option>dark</option>
+          <option>light</option>
+          <option>material_blue</option>
+          <option>material_green</option>
+          <option>material_orange</option>
+          <option>material_red</option>
+        </select>
+      </label>
+      <label>Locale
+        <select id="locale">
+          <option value="default">default</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Basic date</h2>
+      <p><code>{}</code></p>
+      <input class="fp" id="basic" placeholder="Select date...">
+      <output for="basic"></output>
+    </section>
+
+    <section>
+      <h2>Date &amp; time</h2>
+      <p><code>{ enableTime: true, time_24hr: true, dateFormat: "Y-m-d H:i" }</code></p>
+      <input class="fp" id="datetime" placeholder="Select date and time...">
+      <output for="datetime"></output>
+    </section>
+
+    <section>
+      <h2>Time only</h2>
+      <p><code>{ enableTime: true, noCalendar: true, dateFormat: "H:i" }</code></p>
+      <input class="fp" id="time" placeholder="Select time...">
+      <output for="time"></output>
+    </section>
+
+    <section>
+      <h2>Range</h2>
+      <p><code>{ mode: "range", showMonths: 2 }</code></p>
+      <input class="fp" id="range" placeholder="Select range...">
+      <output for="range"></output>
+    </section>
+
+    <section>
+      <h2>Multiple dates</h2>
+      <p><code>{ mode: "multiple", conjunction: ", " }</code></p>
+      <input class="fp" id="multiple" placeholder="Select dates...">
+      <output for="multiple"></output>
+    </section>
+
+    <section>
+      <h2>Min / max, weekends disabled</h2>
+      <p><code>{ minDate: "today", maxDate: +60 days, disable: [weekends] }</code></p>
+      <input class="fp" id="limits" placeholder="Select a weekday...">
+      <output for="limits"></output>
+    </section>
+
+    <section>
+      <h2>Alt input, week numbers</h2>
+      <p><code>{ altInput: true, altFormat: "F j, Y", weekNumbers: true }</code></p>
+      <input class="fp" id="altinput" placeholder="Select date...">
+      <output for="altinput"></output>
+    </section>
+
+    <section>
+      <h2>Inline</h2>
+      <p><code>{ inline: true }</code></p>
+      <input class="fp" id="inline" placeholder="Inline calendar">
+      <output for="inline"></output>
+    </section>
+
+    <section>
+      <h2>Static</h2>
+      <p><code>{ static: true }</code></p>
+      <input class="fp" id="static" placeholder="Select date...">
+      <output for="static"></output>
+    </section>
+
+    <section>
+      <h2>Plugin: rangePlugin</h2>
+      <p>Two inputs, <code>plugins: [rangePlugin({ input: "#range-end" })]</code></p>
+      <div class="pair">
+        <input class="fp" id="range-start" placeholder="Start...">
+        <input class="fp" id="range-end" placeholder="End...">
+      </div>
+      <output for="range-start"></output>
+    </section>
+
+    <section>
+      <h2>Plugin: confirmDate</h2>
+      <p><code>{ enableTime: true, plugins: [confirmDatePlugin({})] }</code></p>
+      <input class="fp" id="confirm" placeholder="Select and confirm...">
+      <output for="confirm"></output>
+    </section>
+
+    <section>
+      <h2>Plugin: monthSelect</h2>
+      <p><code>plugins: [monthSelectPlugin({ dateFormat: "Y-m" })]</code></p>
+      <input class="fp" id="month" placeholder="Select month...">
+      <output for="month"></output>
+    </section>
+
+    <section>
+      <h2>Plugin: weekSelect</h2>
+      <p><code>plugins: [weekSelect({})]</code></p>
+      <input class="fp" id="week" placeholder="Select week...">
+      <output for="week"></output>
+    </section>
+
+    <section>
+      <h2>Plugin: minMaxTime</h2>
+      <p>Today: 12:00&ndash;18:00, other days unrestricted</p>
+      <input class="fp" id="minmaxtime" placeholder="Select date and time...">
+      <output for="minmaxtime"></output>
+    </section>
+  </main>
+
+  <script src="dist/flatpickr.js"></script>
+  <script src="dist/plugins/rangePlugin.js"></script>
+  <script src="dist/plugins/confirmDate/confirmDate.js"></script>
+  <script src="dist/plugins/minMaxTimePlugin.js"></script>
+  <script src="dist/plugins/monthSelect/index.js"></script>
+  <script src="dist/plugins/weekSelect/weekSelect.js"></script>
+
+  <script>
+    (function () {
+      var instances = [];
+      var currentLocale = "default";
+
+      function show(id) {
+        return function (selectedDates, dateStr) {
+          var out = document.querySelector('output[for="' + id + '"]');
+          if (out) out.textContent = dateStr || "";
+        };
+      }
+
+      function addDays(n) {
+        var d = new Date();
+        d.setDate(d.getDate() + n);
+        return d;
+      }
+
+      function today() {
+        return flatpickr.formatDate(new Date(), "Y-m-d");
+      }
+
+      var configs = {
+        basic: {},
+        datetime: { enableTime: true, time_24hr: true, dateFormat: "Y-m-d H:i" },
+        time: { enableTime: true, noCalendar: true, dateFormat: "H:i" },
+        range: { mode: "range", showMonths: 2 },
+        multiple: { mode: "multiple", conjunction: ", " },
+        limits: {
+          minDate: "today",
+          maxDate: addDays(60),
+          disable: [function (d) { return d.getDay() === 0 || d.getDay() === 6; }]
+        },
+        altinput: { altInput: true, altFormat: "F j, Y", weekNumbers: true },
+        inline: { inline: true },
+        static: { static: true },
+        "range-start": function () {
+          return { plugins: [new rangePlugin({ input: "#range-end" })] };
+        },
+        confirm: function () {
+          return { enableTime: true, plugins: [new confirmDatePlugin({})] };
+        },
+        month: function () {
+          return {
+            plugins: [new monthSelectPlugin({ shorthand: true, dateFormat: "Y-m", altFormat: "F Y" })]
+          };
+        },
+        week: function () {
+          return {
+            plugins: [new weekSelect({})],
+            onChange: [function () {
+              var out = document.querySelector('output[for="week"]');
+              var n = this.selectedDates[0] ? this.config.getWeek(this.selectedDates[0]) : "";
+              out.textContent = n ? "week " + n + " — " + this.input.value : "";
+            }]
+          };
+        },
+        minmaxtime: function () {
+          var table = {};
+          table[today()] = { minTime: "12:00", maxTime: "18:00" };
+          return {
+            enableTime: true,
+            minDate: "today",
+            plugins: [new minMaxTimePlugin({ table: table })]
+          };
+        }
+      };
+
+      function createAll() {
+        instances.forEach(function (fp) { fp.destroy(); });
+        instances = [];
+
+        Object.keys(configs).forEach(function (id) {
+          var base = typeof configs[id] === "function" ? configs[id]() : configs[id];
+          var config = Object.assign({}, base, { locale: currentLocale });
+          var onChange = [].concat(config.onChange || []);
+          if (id !== "week") onChange.push(show(id));
+          config.onChange = onChange;
+
+          var out = document.querySelector('output[for="' + id + '"]');
+          if (out) out.textContent = "";
+
+          var el = document.getElementById(id);
+          el.value = "";
+          instances.push(flatpickr(el, config));
+        });
+
+        window.fpInstances = instances;
+      }
+
+      // Theme switcher
+      var themeLink = document.getElementById("theme-css");
+      document.getElementById("theme").addEventListener("change", function () {
+        if (this.value) {
+          themeLink.href = "dist/themes/" + this.value + ".css";
+          themeLink.disabled = false;
+        } else {
+          themeLink.disabled = true;
+          themeLink.removeAttribute("href");
+        }
+      });
+
+      // Locale switcher
+      var localeSelect = document.getElementById("locale");
+      localeSelect.addEventListener("change", function () {
+        var code = this.value;
+        if (code === "default" || flatpickr.l10ns[code]) {
+          currentLocale = code;
+          createAll();
+          return;
+        }
+        var s = document.createElement("script");
+        s.src = "dist/l10n/" + code + ".js";
+        s.onload = function () {
+          currentLocale = flatpickr.l10ns[code] ? code : "default";
+          createAll();
+        };
+        document.head.appendChild(s);
+      });
+
+      function fetchJSON(url, cb) {
+        if (!window.fetch) return;
+        fetch(url, { cache: "no-store" })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) { if (data) cb(data); })
+          .catch(function () {});
+      }
+
+      // Locales available in dist (generated by the workflow).
+      fetchJSON("locales.json", function (list) {
+        list.forEach(function (code) {
+          if (code === "default") return;
+          var opt = document.createElement("option");
+          opt.value = opt.textContent = code;
+          localeSelect.appendChild(opt);
+        });
+      });
+
+      // Build info (generated by the workflow).
+      fetchJSON("build-info.json", function (info) {
+        var el = document.getElementById("build-info");
+        var sha = info.sha.slice(0, 7);
+        var commitUrl = "https://github.com/" + info.repo + "/commit/" + info.sha;
+        el.innerHTML = "";
+        el.appendChild(document.createTextNode("v" + info.version + " · dist from "));
+        var a = document.createElement("a");
+        a.href = commitUrl;
+        a.textContent = sha;
+        el.appendChild(a);
+        el.appendChild(document.createTextNode(" · built " + info.date));
+      });
+
+      createAll();
+    })();
+  </script>
+</body>
+</html>
