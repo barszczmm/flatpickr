@@ -259,6 +259,7 @@ function monthSelectPlugin(pluginConfig) {
         return {
             onParseConfig: function () {
                 fp.config.enableTime = false;
+                fp.isMobile = false;
             },
             onValueUpdate: setCurrentlySelected,
             onKeyDown: onKeyDown,
