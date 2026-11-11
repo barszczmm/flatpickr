@@ -292,7 +292,11 @@
 
           var el = document.getElementById(id);
           el.value = "";
-          instances.push(flatpickr(el, config));
+          // flatpickr() returns an array (empty if creating it failed) when
+          // it does not create exactly one instance
+          [].concat(flatpickr(el, config)).forEach(function (fp) {
+            instances.push(fp);
+          });
         });
 
         window.fpInstances = instances;
