@@ -347,4 +347,37 @@ describe("monthSelect", () => {
       });
     });
   });
+
+  describe("on a mobile device", () => {
+    const userAgent = Object.getOwnPropertyDescriptor(
+      window.navigator,
+      "userAgent"
+    );
+
+    beforeEach(() => {
+      Object.defineProperty(window.navigator, "userAgent", {
+        value: "Android",
+        configurable: true,
+      });
+    });
+
+    afterEach(() => {
+      if (userAgent)
+        Object.defineProperty(window.navigator, "userAgent", userAgent);
+      else delete (window.navigator as any).userAgent;
+    });
+
+    it("uses the calendar instead of a native input", () => {
+      const instance = createInstance() as Instance;
+
+      expect(instance.isMobile).toBe(false);
+      expect(instance.mobileInput).toBeUndefined();
+      expect(
+        instance.rContainer!.querySelectorAll(".flatpickr-monthSelect-month")
+          .length
+      ).toEqual(12);
+
+      instance.destroy();
+    });
+  });
 });

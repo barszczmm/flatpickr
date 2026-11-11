@@ -192,7 +192,10 @@
     appearance none
     background none
     border 0
-    box-sizing content-box
+    // padding is included in the height so the button (its hover, focus
+    // outline and click area) stays within the month header instead of
+    // overlapping the weekday labels below it
+    box-sizing border-box
     // keep the arrow at the top like the former inline element did
     display flex
     align-items flex-start

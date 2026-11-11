@@ -60,6 +60,7 @@ function weekSelectPlugin() {
             onParseConfig: function () {
                 fp.config.mode = "single";
                 fp.config.enableTime = false;
+                fp.isMobile = false;
                 fp.config.dateFormat = fp.config.dateFormat
                     ? fp.config.dateFormat
                     : "\\W\\e\\e\\k #W, Y";

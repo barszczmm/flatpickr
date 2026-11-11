@@ -366,6 +366,9 @@ function monthSelectPlugin(pluginConfig?: Partial<Config>): Plugin {
     return {
       onParseConfig() {
         fp.config.enableTime = false;
+        // the plugin replaces the calendar's days with months, so it needs
+        // the calendar: a native mobile date input cannot select a month
+        fp.isMobile = false;
       },
       onValueUpdate: setCurrentlySelected,
       onKeyDown,
